@@ -105,7 +105,8 @@ def find_coins_circles_refined(image_name_full, hcParam, num_coins, show_clahed=
 
     good_circles = []
 
-    img_orig = cv2.imread(image_name_full)
+    if show_clahed:
+        img_orig = cv2.imread(image_name_full)
 
     if not circles is None:
         print(f"\tCircles before refining {circles.shape[1]}")
@@ -157,17 +158,17 @@ def do_extraction(raw_folder_full, save_folder_full, pad):
     Output images: same folders, in save_folder_full
     """
     show_crop = False
-    #  show_clahed = False
-    show_clahed = True
-    save_results = False
-    #  save_results = True
+    show_clahed = False
+    #  show_clahed = True
+    #  save_results = False
+    save_results = True
 
     raw_folder_tag = raw_folder_full.split(sep)[-1]
     print(f"\nRAW folder tag: {raw_folder_tag}\n")
 
     for label_folder in listdir(raw_folder_full):
-        if not label_folder.startswith("1e"):
-            continue
+        #  if not label_folder.startswith("1e"):
+            #  continue
 
         label, num_coins = label_folder.split("_")
         num_coins = int(num_coins)
@@ -225,21 +226,18 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 150,
-            #  "minRadius": 110,
             "minRadius": 100,
             "maxRadius": 140,
             "param1": 65,
             "param2": 30,
         }
     elif label in ["2c"]:
-        # 2c TODO
+        # 2c
         param = {
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
-            #  "minDist": 150,
             "minDist": 250,
             "minRadius": 125,
-            #  "minRadius": 135,
             "maxRadius": 160,
             "param1": 65,
             "param2": 30,
@@ -250,10 +248,8 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 150,
-            #  "minRadius": 150,
             "minRadius": 140,
             "maxRadius": 180,
-            #  "maxRadius": 165,
             "param1": 60,
             "param2": 25,
         }
@@ -263,7 +259,6 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 150,
-            #  "minRadius": 130,
             "minRadius": 120,
             "maxRadius": 160,
             "param1": 70,
@@ -275,10 +270,7 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 250,
-            #  "minRadius": 150,
-            #  "minRadius": 155,
             "minRadius": 145,
-            #  "maxRadius": 180,
             "maxRadius": 190,
             "param1": 65,
             "param2": 30,
@@ -289,11 +281,8 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 300,
-            #  "minRadius": 165,
             "minRadius": 150,
-            #  "maxRadius": 200,
             "maxRadius": 220,
-            #  "param1": 80,
             "param1": 70,
             "param2": 45,
         }
@@ -303,10 +292,7 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
             "method": cv2.HOUGH_GRADIENT,
             "dp": 1.0,
             "minDist": 400,
-            #  "minRadius": 165,
-            #  "minRadius": 155,
             "minRadius": 145,
-            #  "maxRadius": 190,
             "maxRadius": 200,
             "param1": 70,
             "param2": 25,
@@ -329,7 +315,6 @@ def getHCpar_wide(label, raw_folder_tag="standard"):
                 "minDist": 100,
                 "minRadius": 150,
                 "maxRadius": 230,
-                #  "param1": 140,
                 "param1": 75,
                 "param2": 40,
             }
