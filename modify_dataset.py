@@ -39,6 +39,54 @@ def parse_arguments():
         help="path to output folder",
     )
 
+    parser.add_argument(
+        "-os", "--out_size", type=int, default=64, help="size of the output images"
+    )
+
+    parser.add_argument(
+        "-ne",
+        "--no_equalize",
+        default=False,
+        action="store_true",
+        help="set this option to *not* equalize the image",
+    )
+    parser.add_argument(
+        "-nm",
+        "--no_mask",
+        default=False,
+        action="store_true",
+        help="set this option to *not* mask the image",
+    )
+    parser.add_argument(
+        "-nr",
+        "--no_resize",
+        default=False,
+        action="store_true",
+        help="set this option to *not* resize the image",
+    )
+
+    parser.add_argument(
+        "-pc",
+        "--pad_crop",
+        type=int,
+        default=30,
+        help="pad used in the creation of the dataset",
+    )
+    parser.add_argument(
+        "-pm",
+        "--pad_mask",
+        type=int,
+        default=5,
+        help="pad to use when masking the background",
+    )
+    parser.add_argument(
+        "-pr",
+        "--pad_resize",
+        type=int,
+        default=5,
+        help="pad to use when cropping and resizing",
+    )
+
     parser.add_argument("-s", "--seed", type=int, default=-1, help="random seed to use")
 
     # last line to parse the args
@@ -212,7 +260,19 @@ def find_best_circle(image, pad_crop):
     return mx, my, mr
 
 
-def do_modify(args):
+def do_modify(
+    path_input,
+    path_output,
+    out_size,
+    flag_equalize=True,
+    flag_mask=True,
+    flag_resize=True,
+    pad_crop=30,
+    pad_mask=5,
+    pad_resize=5,
+    interpolation_method=cv2.INTER_AREA,
+    logLevel="WARN",
+):
     """Modify the dataset
 
     Options:
@@ -232,34 +292,21 @@ def do_modify(args):
     """
 
     logmodify = logging.getLogger(f"{__name__}.console.modify")
-    #  logmodify.setLevel('INFO')
+    logmodify.setLevel(logLevel)
 
     dir_file = abspath(dirname(__file__))
 
-    path_input = args.path_input
     path_input_full = abspath(join(dir_file, path_input))
     logmodify.info(f"path_input_full {path_input_full}")
 
-    path_output = args.path_output
     path_output_full = abspath(join(dir_file, path_output))
     logmodify.info(f"path_output_full {path_output_full}")
 
-    flag_equalize = True
-    flag_mask = True
-    flag_resize = True
-
-    pad_crop = 30  # pad used in the dataset
-    pad_mask = 5   # pad when masking around the circle found
-    pad_resize = 5 # pad from border when resizing
-
-    out_size = 256
-
-    interpolation_method = cv2.INTER_AREA
-
-    show_original = False
-    show_clahed = False and flag_equalize
-    show_masked = False and flag_mask
-    show_resized = False and flag_resize
+    show_all = False
+    show_original = False or show_all
+    show_clahed = False or show_all
+    show_masked = False or show_all
+    show_resized = False or show_all
     save_results = True
 
     for label in listdir(path_input_full):
@@ -327,11 +374,50 @@ def main():
     path_input = args.path_input
     path_output = args.path_output
 
+    out_size = args.out_size
+
+    flag_equalize = not args.no_equalize
+    flag_mask = not args.no_mask
+    flag_resize = not args.no_resize
+
+    pad_crop = args.pad_crop
+    pad_mask = args.pad_mask
+    pad_resize = args.pad_resize
+
+    interpolation_method = cv2.INTER_AREA
+
     logmoduleconsole = setup_logger()
 
-    logmoduleconsole.info(f"python3 modify_dataset.py -s {myseed} -i {path_input}")
+    recap = f"python3 modify_dataset.py"
+    recap += f" --path_input {path_input}"
+    recap += f" --path_output {path_output}"
+    recap += f" --out_size {out_size}"
+    recap += " --no_equalize" if args.no_equalize else ""
+    recap += " --no_mask" if args.no_mask else ""
+    recap += " --no_resize" if args.no_resize else ""
+    recap += f" --pad_crop {pad_crop}"
+    recap += f" --pad_mask {pad_mask}"
+    recap += f" --pad_resize {pad_resize}"
+    recap += f" --seed {myseed}"
 
-    do_modify(args)
+    logmoduleconsole.info(recap)
+
+    #  logLevel = "INFO"
+    logLevel = "ERROR"
+
+    do_modify(
+        path_input,
+        path_output,
+        out_size,
+        flag_equalize,
+        flag_mask,
+        flag_resize,
+        pad_crop,
+        pad_mask,
+        pad_resize,
+        interpolation_method,
+        logLevel,
+    )
 
 
 if __name__ == "__main__":
