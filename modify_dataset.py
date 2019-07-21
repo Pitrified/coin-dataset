@@ -25,7 +25,7 @@ def parse_arguments():
 
     parser.add_argument(
         "-i",
-        "--input_path",
+        "--path_input",
         type=str,
         default="./original",
         help="path to input images to use",
@@ -33,7 +33,7 @@ def parse_arguments():
 
     parser.add_argument(
         "-o",
-        "--output_path",
+        "--path_output",
         type=str,
         default="./modified",
         help="path to output folder",
@@ -154,59 +154,162 @@ def mask_background(img_orig, x, y, r, pad=10, show=False):
     return img_masked
 
 
+def find_best_circle(image, pad_crop):
+    """Find the best position of a coin in the image
+    """
+    logfindbest = logging.getLogger(f"{__name__}.console.findbest")
+    logfindbest.setLevel("INFO")
+
+    img_dim = image.shape[0]
+    center = img_dim // 2
+    logfindbest.debug(f"\tImage dim {img_dim} center {center}")
+
+    # position of the circle used to create this image
+    ox, oy = center, center
+    orad = center - pad_crop
+    logfindbest.debug(f"\tOrig circle {ox} {oy} - {orad}")
+
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    method = cv2.HOUGH_GRADIENT
+    dp = 1.0
+    minDist = img_dim
+    param1 = 70
+    param2 = 35
+    minRadius = center - 2 * pad_crop
+    maxRadius = center
+
+    circles = cv2.HoughCircles(
+        image_gray,
+        method=method,
+        dp=dp,
+        minDist=minDist,
+        param1=param1,
+        param2=param2,
+        minRadius=minRadius,
+        maxRadius=maxRadius,
+    )
+
+    if circles is None:
+        return ox, oy, orad
+
+    # keep only the first (best) circle
+    bx, by, br = circles[0, 0, :].astype(int)
+    logfindbest.debug(f"\tBest circle {bx} {by} - {br}")
+
+    # average the original and best circle
+    mx = (ox + bx) // 2
+    my = (oy + by) // 2
+    mr = (orad + br) // 2
+    logfindbest.debug(f"\tMean circle {mx} {my} - {mr}")
+
+    if False:
+        # this changes the original image, enable only to tune the algorithm
+        cv2.circle(image, (ox, oy), orad, thickness=1, color=(255, 0, 0))
+        cv2.circle(image, (bx, by), br, thickness=1, color=(0, 255, 0))
+        cv2.circle(image, (mx, my), mr, thickness=1, color=(0, 0, 255))
+
+    return mx, my, mr
+
+
 def do_modify(args):
     """Modify the dataset
 
     Options:
     * equalize
     * mask
-    * resize
+    * resize (fit circle to out_size)
+
+    Both mask and resize have an optional (independent) padding
+    The path_output might be a numpy array of images
 
     In this order
     # img_work = cv2.imread
+    # find_best_circle on original image? or on equalized?
     # img_work = equalize_Lab_clahe(img_work)
     # img_work = mask_background(img_work)
     # img_work = cv2.resize(img_work)
     """
 
     logmodify = logging.getLogger(f"{__name__}.console.modify")
+    #  logmodify.setLevel('INFO')
 
     dir_file = abspath(dirname(__file__))
 
-    input_path = args.input_path
-    input_path_full = abspath(join(dir_file, input_path))
-    logmodify.info(f"input_path_full {input_path_full}")
+    path_input = args.path_input
+    path_input_full = abspath(join(dir_file, path_input))
+    logmodify.info(f"path_input_full {path_input_full}")
 
-    output_path = args.output_path
-    output_path_full = abspath(join(dir_file, output_path))
-    logmodify.info(f"output_path_full {output_path_full}")
+    path_output = args.path_output
+    path_output_full = abspath(join(dir_file, path_output))
+    logmodify.info(f"path_output_full {path_output_full}")
 
-    equalize_flag = True
-    mask_flag = True
-    resize_flag = True
+    flag_equalize = True
+    flag_mask = True
+    flag_resize = True
 
-    show_original = True
-    show_clahed = True
+    pad_crop = 30  # pad used in the dataset
+    pad_mask = 5   # pad when masking around the circle found
+    pad_resize = 5 # pad from border when resizing
 
-    for label in listdir(input_path_full):
-        label_full = join(input_path_full, label)
-        logmodify.info(f"\nLABEL: {label}\n")
+    out_size = 256
 
+    interpolation_method = cv2.INTER_AREA
+
+    show_original = False
+    show_clahed = False and flag_equalize
+    show_masked = False and flag_mask
+    show_resized = False and flag_resize
+    save_results = True
+
+    for label in listdir(path_input_full):
+        label_full = join(path_input_full, label)
+        logmodify.info(f"\nLABEL: {label}")
+
+        path_output_label_full = abspath(join(path_output_full, label))
+        logmodify.debug(f"path_output_label_full {path_output_label_full}\n")
+        if save_results and not isdir(path_output_label_full):
+            makedirs(path_output_label_full)
+
+        #  for image_name in sorted(listdir(label_full)):
         for image_name in sorted(listdir(label_full)[:5]):
             image_name_full = join(label_full, image_name)
-            logmodify.debug(f"IMAGE: {image_name}")
+            logmodify.info(f"IMAGE: {image_name}")
 
             img_work = cv2.imread(image_name_full)
             if show_original:
                 imshow_resized("Original", img_work)
 
-            if equalize_flag:
+            if flag_equalize:
                 img_work = equalize_Lab_clahe(img_work)
                 if show_clahed:
                     imshow_resized("Lab clahed", img_work)
 
-            if show_original or show_clahed:
+            # find the best circle of the coin
+            x, y, r = find_best_circle(img_work, pad_crop)
+
+            # mask around it, with padding pad_mask
+            if flag_mask:
+                img_work = mask_background(img_work, x, y, r, pad_mask)
+                if show_masked:
+                    imshow_resized("Lab masked", img_work)
+
+            # crop and resize around it, with padding pad_resize
+            if flag_resize:
+                img_work = crop_circle(img_work, x, y, r, pad_resize)
+                img_work = cv2.resize(
+                    img_work, (out_size, out_size), interpolation=interpolation_method
+                )
+                if show_resized:
+                    imshow_resized("Lab resized", img_work)
+
+            if show_original or show_clahed or show_masked or show_resized:
                 cv2.waitKey(0)
+
+            if save_results:
+                out_name_full = join(path_output_label_full, image_name)
+                logmodify.debug(f"\tout_name_full {out_name_full}")
+                cv2.imwrite(out_name_full, img_work)
 
 
 def main():
@@ -221,7 +324,8 @@ def main():
     seed(myseed)
     np.random.seed(myseed)
 
-    path_input = args.input_path
+    path_input = args.path_input
+    path_output = args.path_output
 
     logmoduleconsole = setup_logger()
 
