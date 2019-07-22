@@ -160,15 +160,15 @@ def do_extraction(raw_folder_full, save_folder_full, pad):
     show_crop = False
     show_clahed = False
     #  show_clahed = True
-    #  save_results = False
+    save_results = False
     save_results = True
 
     raw_folder_tag = raw_folder_full.split(sep)[-1]
     print(f"\nRAW folder tag: {raw_folder_tag}\n")
 
     for label_folder in listdir(raw_folder_full):
-        #  if not label_folder.startswith("1e"):
-            #  continue
+        if not label_folder.startswith("1c"):
+            continue
 
         label, num_coins = label_folder.split("_")
         num_coins = int(num_coins)
@@ -336,11 +336,12 @@ def main():
     pad = 30
 
     raw_folder_list = [
-        "./raw/raw1",
-        "./raw/raw2",
-        "./raw/raw3",
-        "./raw/raw4",
-        "./raw/raw5",
+        #  "./raw/raw1",
+        #  "./raw/raw2",
+        #  "./raw/raw3",
+        #  "./raw/raw4",
+        #  "./raw/raw5",
+        "./raw/raw6",
     ]
 
     for raw_folder in raw_folder_list:
