@@ -261,8 +261,8 @@ def find_best_circle(image, pad_crop):
 
 
 def do_modify(
-    path_input,
-    path_output,
+    path_input_full,
+    path_output_full,
     out_size,
     flag_equalize=True,
     flag_mask=True,
@@ -281,11 +281,11 @@ def do_modify(
     * resize (fit circle to out_size)
 
     Both mask and resize have an optional (independent) padding
-    The path_output might be a numpy array of images
+    The path_output might be a numpy array of images TODO
 
     In this order
     # img_work = cv2.imread
-    # find_best_circle on original image? or on equalized?
+    # find_best_circle on original image? or on equalized? TODO
     # img_work = equalize_Lab_clahe(img_work)
     # img_work = mask_background(img_work)
     # img_work = cv2.resize(img_work)
@@ -293,14 +293,6 @@ def do_modify(
 
     logmodify = logging.getLogger(f"{__name__}.console.modify")
     logmodify.setLevel(logLevel)
-
-    dir_file = abspath(dirname(__file__))
-
-    path_input_full = abspath(join(dir_file, path_input))
-    logmodify.info(f"path_input_full {path_input_full}")
-
-    path_output_full = abspath(join(dir_file, path_output))
-    logmodify.info(f"path_output_full {path_output_full}")
 
     show_all = False
     show_original = False or show_all
@@ -402,12 +394,20 @@ def main():
 
     logmoduleconsole.info(recap)
 
-    #  logLevel = "INFO"
-    logLevel = "ERROR"
+    logLevel = "INFO"
+    #  logLevel = "ERROR"
+
+    dir_file = abspath(dirname(__file__))
+
+    path_input_full = abspath(join(dir_file, path_input))
+    logmoduleconsole.info(f"path_input_full {path_input_full}")
+
+    path_output_full = abspath(join(dir_file, path_output))
+    logmoduleconsole.info(f"path_output_full {path_output_full}")
 
     do_modify(
-        path_input,
-        path_output,
+        path_input_full,
+        path_output_full,
         out_size,
         flag_equalize,
         flag_mask,
