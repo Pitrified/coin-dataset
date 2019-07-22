@@ -7,14 +7,14 @@ My euro coin dataset for image classification experiments. Front only.
 ```
 coin-dataset
 ├── original
-│   ├── 10c [567 entries]
-│   ├── 1c [293 entries]
-│   ├── 1e [547 entries]
-│   ├── 20c [335 entries]
-│   ├── 2c [376 entries]
-│   ├── 2e [633 entries]
-│   ├── 50c [446 entries]
-│   └── 5c [481 entries]
+│   ├── 10c [1025 images]
+│   ├── 1c [1150 images]
+│   ├── 1e [1027 images]
+│   ├── 20c [1058 images]
+│   ├── 2c [1005 images]
+│   ├── 2e [1041 images]
+│   ├── 50c [1031 images]
+│   └── 5c [1088 images]
 ├── raw
 │   ├── raw1
 │   │   ├── 10c_8
